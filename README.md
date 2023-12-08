@@ -1,28 +1,138 @@
 # event-manager modular service
 
-*event-manager* is a Viam modular service that provides generic capabilities
+*event-manager* is a Viam modular component that provides eventing capabilities for SAVCAM (Smart AI Viam Camera) using the generic component API.
 
 The model this module makes available is viam-labs:savcam:event-manager
 
 ## Prerequisites
 
-Add instructions here for any prerequisites.
-
-``` bash
-```
+None
 
 ## API
 
-The event-manager resource implements the [rdk generic API](https://github.com/rdk/generic-api).
-
-Please also use the API codebase to interact with a configured version of this service via Viam SDK.
+The event-manager resource implements the [rdk generic API](https://github.com/viamrobotics/api/blob/main/proto/viam/component/generic/v1/generic.proto).
 
 ## Viam Service Configuration
 
-Add notes and example JSON config here.
+The service configuration uses JSON to describe rules around events.
+The following example
 
 ```json
+{
+    "event_eval_frequency_secs": 10,
+    "events": [
+        {
+            "name": "Pets out at night",
+            "modes": ["home", "away"],
+            "debounce_interval_secs": 300,
+            "rule_logic_type": "AND",
+            "notifications": [
+                {
+                    "type": "webhook_get",
+                    "url": "https://maker.ifttt.com/trigger/person_seen/json/with/key/cg5po9SnvoE98ahpZ7j-JE"
+                },
+                {
+                    "type": "sms",
+                    "carrier": "att",
+                    "phone": "9175550100"
+                }
+            ],
+            "rules": [
+                {
+                    "type": "detection",
+                    "detector": "effdet",
+                    "class_regex": "cat|dog",                    
+                    "cameras": ["cam1", "cam2"]
+                },
+                {
+                    "type": "time",
+                    "ranges": [
+                        {
+                            "start_hour": 0,
+                            "end_hour": 8 
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
 ```
+
+## depends_on configuration
+
+ Note that you will need to include specified required cameras or other components/services in the `depends_on` array for the configuration, for example:
+
+```json
+      "depends_on": [
+        "cam1", "cam2"
+      ]
+```
+
+### events
+
+*list*
+
+Any number of events can be configured, and will be repeatedly evaluated.
+If an event evaluates to true, it will be tracked, and any configured notifications will occur.
+
+### name
+
+*string (required)*
+
+Label for the configured event.
+Used in logging and notifications.
+
+#### modes
+
+*list[enum home|away] (required)*
+
+The list of modes in which this event will be evaluated.
+
+#### rule_logic_type
+
+*enum AND|OR|XOR|XAND|NOR|NAND (default AND)*
+
+The [logic gate](https://www.techtarget.com/whatis/definition/logic-gate-AND-OR-XOR-NOT-NAND-NOR-and-XNOR) to use with configured rules.
+For example, if *NOR* was set and there were two rules configured that both evaluated false, the event would trigger.
+
+#### debounce_interval_secs
+
+*integer (default 300)*
+
+After an event is triggered, how long (in seconds) before it can trigger again.
+
+#### notifications
+
+*list*
+
+Notifications define actions to take when an event triggers.
+
+##### type
+
+*enum webhook_get|sms|email (required)*
+
+If type is **webhook**, *url* must be provided, which is an HTTP(S) URL that will be called via GET to trigger a webhook.
+
+If type is **email**, *address* must be provided, which is a valid email address.
+
+If type is **sms**, *carrier* and *phone* must be provided. *carrier* supports att|verizon|sprint|tmobile|boost|metropcs via [email-to-sms](https://avtech.com/articles/138/list-of-email-to-sms-addresses/)
+
+#### rules
+
+*list*
+
+Rules define what is evaluated in order to trigger event logging and notifications.
+Any number of rules can be configured for a given event.
+
+##### type
+
+*enum detection|classification|time*
+
+If *type* is **detection**, *detector* (name of vision service detector), *cameras* (list of configured cameras), and *class_regex* (regular expression to match detection class, defaults to any class) must be defined.
+Note that any detectors or cameras must be configured in [depends_on](#depends_on-configuration).
+
+If *type* is **time**, *ranges* must be defined, which is a list of *start_hour* and *end_hour*, which are integers representing the start hour in UTC.
 
 ## Troubleshooting
 
