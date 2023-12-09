@@ -9,14 +9,31 @@ from viam.resource.base import ResourceBase
 from viam.resource.types import Model, ModelFamily
 
 from viam.components.generic import Generic
-from viam.utils import ValueTypes
+from viam.utils import ValueTypes, struct_to_dict
 
 from viam.logging import getLogger
 
+from . import rules
+from . import notifications
+
 import time
 import asyncio
+from enum import Enum
 
 LOGGER = getLogger(__name__)
+
+class Modes(Enum):
+    home = 1
+    away = 2
+
+class Event():
+    is_triggered: bool = False
+    last_triggered: time = time.gmtime(0)
+    modes: list = ["home"]
+    debounce_interval_secs: int = 300
+    rule_logic_type: str = 'AND'
+    notifications: list[notifications.NotificationSMS|notifications.NotificationEmail|notifications.NotificationWebhookGET]
+    rules: list[rules.RuleDetector|rules.RuleClassifier|rules.RuleTime]
 
 class eventManager(Generic, Reconfigurable):
     
@@ -27,8 +44,8 @@ class eventManager(Generic, Reconfigurable):
 
     MODEL: ClassVar[Model] = Model(ModelFamily("viam-labs", "savcam"), "event-manager")
     
-    # create any class parameters here, 'some_pin' is used as an example (change/add as needed)
-    some_pin: int
+    mode: Modes = "home"
+    events: list[Event]
 
     # Constructor
     @classmethod
@@ -40,18 +57,32 @@ class eventManager(Generic, Reconfigurable):
     # Validates JSON Configuration
     @classmethod
     def validate(cls, config: ComponentConfig):
-        # here we validate config, the following is just an example and should be updated as needed
-        some_pin = config.attributes.fields["some_pin"].number_value
-        if some_pin == "":
-            raise Exception("A some_pin must be defined")
+        try:
+            mode = Modes[config.attributes.fields["mode"].string_value]
+        except:
+            raise Exception("mode is invalid")
         return
 
     # Handles attribute reconfiguration
     def reconfigure(self, config: ComponentConfig, dependencies: Mapping[ResourceName, ResourceBase]):
-        # here we initialize the resource instance, the following is just an example and should be updated as needed
-        self.some_pin = int(config.attributes.fields["some_pin"].number_value)
+        attributes = struct_to_dict(config.attributes)
+        self.mode = Modes[attributes.get("mode")]
+        self.events = attributes.get("events")
+
+        asyncio.ensure_future(self.manage_events())
         return
 
+    async def manage_events(self):
+        for event in self.events:
+            if ((event.is_triggered == False) or ((event.is_triggered == True) and ((time.time - event.last_triggered) >= event.debounce_interval_secs))):
+                rule_results = []
+                for rule in event.rules:
+                    rule_results.append(rules.eval_rule(rule))
+                if rules.logical_trigger(event.rule_logic_type, rule_results):
+                    for n in event.notifications:
+                        return
+        return
+    
     async def do_command(
                 self,
                 command: Mapping[str, ValueTypes],

@@ -19,7 +19,7 @@ The following example
 
 ```json
 {
-    "event_eval_frequency_secs": 10,
+    "mode": "home",
     "events": [
         {
             "name": "Pets out at night",
@@ -59,15 +59,19 @@ The following example
 }
 ```
 
-## depends_on configuration
-
- Note that you will need to include specified required cameras or other components/services in the `depends_on` array for the configuration, for example:
+Note that you will need to include specified required cameras or other components/services in the `depends_on` array for the configuration, for example:
 
 ```json
       "depends_on": [
         "cam1", "cam2"
       ]
 ```
+
+### mode
+
+*enum home|away (default: "home")*
+
+Event manager mode, which is used in event evaluation based on configured event [modes](#modes)
 
 ### events
 
@@ -91,7 +95,7 @@ The list of modes in which this event will be evaluated.
 
 #### rule_logic_type
 
-*enum AND|OR|XOR|XAND|NOR|NAND (default AND)*
+*enum AND|OR|XOR|NOR|NAND|XNOR (default AND)*
 
 The [logic gate](https://www.techtarget.com/whatis/definition/logic-gate-AND-OR-XOR-NOT-NAND-NOR-and-XNOR) to use with configured rules.
 For example, if *NOR* was set and there were two rules configured that both evaluated false, the event would trigger.
@@ -112,7 +116,7 @@ Notifications define actions to take when an event triggers.
 
 *enum webhook_get|sms|email (required)*
 
-If type is **webhook**, *url* must be provided, which is an HTTP(S) URL that will be called via GET to trigger a webhook.
+If type is **webhook_get**, *url* must be provided, which is an HTTP(S) URL that will be called via GET to trigger a webhook.
 
 If type is **email**, *address* must be provided, which is a valid email address.
 
@@ -130,7 +134,10 @@ Any number of rules can be configured for a given event.
 *enum detection|classification|time*
 
 If *type* is **detection**, *detector* (name of vision service detector), *cameras* (list of configured cameras), and *class_regex* (regular expression to match detection class, defaults to any class) must be defined.
-Note that any detectors or cameras must be configured in [depends_on](#depends_on-configuration).
+Note that detector and cameras must be configured in *depends_on*.
+
+If *type* is **classification**, *classifier* (name of vision service classifier), *cameras* (list of configured cameras), and *class_regex* (regular expression to match detection class, defaults to any class) must be defined.
+Note that classifier and cameras must be configured in *depends_on*.
 
 If *type* is **time**, *ranges* must be defined, which is a list of *start_hour* and *end_hour*, which are integers representing the start hour in UTC.
 
