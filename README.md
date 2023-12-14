@@ -1,4 +1,4 @@
-# event-manager modular service
+# SAVCAM event-manager modular service
 
 *event-manager* is a Viam modular component that provides eventing capabilities for SAVCAM (Smart AI Viam Camera) using the generic component API.
 
