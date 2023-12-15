@@ -41,6 +41,7 @@ The following example
                 {
                     "type": "detection",
                     "detector": "effdet",
+                    "confidence_pct": 0.8,
                     "class_regex": "cat|dog",                    
                     "cameras": ["cam1", "cam2"]
                 },
@@ -112,7 +113,7 @@ After an event is triggered, how long (in seconds) before it can trigger again.
 
 Notifications define actions to take when an event triggers.
 
-##### type
+##### notification type
 
 *enum webhook_get|sms|email (required)*
 
@@ -129,14 +130,14 @@ If type is **sms**, *carrier* and *phone* must be provided. *carrier* supports a
 Rules define what is evaluated in order to trigger event logging and notifications.
 Any number of rules can be configured for a given event.
 
-##### type
+##### rule type
 
 *enum detection|classification|time*
 
-If *type* is **detection**, *detector* (name of vision service detector), *cameras* (list of configured cameras), and *class_regex* (regular expression to match detection class, defaults to any class) must be defined.
+If *type* is **detection**, *detector* (name of vision service detector), *cameras* (list of configured cameras), *confidence_pct* (percent confidence threshold out of 1), and *class_regex* (regular expression to match detection class, defaults to any class) must be defined.
 Note that detector and cameras must be configured in *depends_on*.
 
-If *type* is **classification**, *classifier* (name of vision service classifier), *cameras* (list of configured cameras), and *class_regex* (regular expression to match detection class, defaults to any class) must be defined.
+If *type* is **classification**, *classifier* (name of vision service classifier), *cameras* (list of configured cameras), *confidence_pct* (percent confidence threshold out of 1), and *class_regex* (regular expression to match detection class, defaults to any class) must be defined.
 Note that classifier and cameras must be configured in *depends_on*.
 
 If *type* is **time**, *ranges* must be defined, which is a list of *start_hour* and *end_hour*, which are integers representing the start hour in UTC.

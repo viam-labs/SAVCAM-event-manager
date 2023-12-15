@@ -27,6 +27,7 @@ class Modes(Enum):
     away = 2
 
 class Event():
+    name: str
     is_triggered: bool = False
     last_triggered: time = time.gmtime(0)
     modes: list = ["home"]
@@ -46,6 +47,7 @@ class eventManager(Generic, Reconfigurable):
     
     mode: Modes = "home"
     events: list[Event]
+    robot_resources: dict
 
     # Constructor
     @classmethod
@@ -68,19 +70,25 @@ class eventManager(Generic, Reconfigurable):
         attributes = struct_to_dict(config.attributes)
         self.mode = Modes[attributes.get("mode")]
         self.events = attributes.get("events")
-
+        self.robot_resources["_deps"] = dependencies
         asyncio.ensure_future(self.manage_events())
         return
 
     async def manage_events(self):
-        for event in self.events:
-            if ((event.is_triggered == False) or ((event.is_triggered == True) and ((time.time - event.last_triggered) >= event.debounce_interval_secs))):
-                rule_results = []
-                for rule in event.rules:
-                    rule_results.append(rules.eval_rule(rule))
-                if rules.logical_trigger(event.rule_logic_type, rule_results):
-                    for n in event.notifications:
-                        return
+        while True:
+            for event in self.events:
+                if ((self.mode in event.modes) and ((event.is_triggered == False) or ((event.is_triggered == True) and ((time.time - event.last_triggered) >= event.debounce_interval_secs)))):
+                    # reset trigger before evaluating
+                    event.is_triggered = False
+                    rule_results = []
+                    for rule in event.rules:
+                        rule_results.append(await rules.eval_rule(rule, self.robot_resources))
+                    if rules.logical_trigger(event.rule_logic_type, rule_results):
+                        event.is_triggered = True
+                        event.last_triggered = time.time
+                        for n in event.notifications:
+                            notifications.notify(event.name, n)
+                            return
         return
     
     async def do_command(

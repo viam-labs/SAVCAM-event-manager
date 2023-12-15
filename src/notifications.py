@@ -12,5 +12,8 @@ class NotificationWebhookGET():
     type: str="webhook_get"
     address: str
 
-def notify(rule_name:str, notification:NotificationEmail|NotificationSMS|NotificationWebhookGET):
+def notify(event_name:str, notification:NotificationEmail|NotificationSMS|NotificationWebhookGET):
+
+    if notification.type == "email":
+        return
     return
