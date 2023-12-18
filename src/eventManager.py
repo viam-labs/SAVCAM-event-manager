@@ -36,6 +36,30 @@ class Event():
     notifications: list[notifications.NotificationSMS|notifications.NotificationEmail|notifications.NotificationWebhookGET]
     rules: list[rules.RuleDetector|rules.RuleClassifier|rules.RuleTime]
 
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            if isinstance(value, list):
+                if key == "notifications":
+                    self.__dict__[key] = []
+                    for item in value:
+                        if item["type"] == "sms":
+                            self.__dict__[key].append(notifications.NotificationSMS(**item))
+                        elif item["type"] == "email":
+                            self.__dict__[key].append(notifications.NotificationEmail(**item))
+                        elif item["type"] == "webhook_get":
+                            self.__dict__[key].append(notifications.NotificationWebhookGET(**item))
+                elif key == "rules":
+                    self.__dict__[key] = []
+                    for item in value:
+                        if item["type"] == "detection":
+                            self.__dict__[key].append(rules.RuleDetector(**item))
+                        elif item["type"] == "classification":
+                            self.__dict__[key].append(rules.RuleClassifier(**item))
+                        elif item["type"] == "time":
+                            self.__dict__[key].append(rules.RuleTime(**item))
+            else:
+                self.__dict__[key] = value
+
 class eventManager(Generic, Reconfigurable):
     
     """
@@ -46,8 +70,8 @@ class eventManager(Generic, Reconfigurable):
     MODEL: ClassVar[Model] = Model(ModelFamily("viam-labs", "savcam"), "event-manager")
     
     mode: Modes = "home"
-    events: list[Event]
-    robot_resources: dict
+    events = []
+    robot_resources = {}
 
     # Constructor
     @classmethod
@@ -68,13 +92,20 @@ class eventManager(Generic, Reconfigurable):
     # Handles attribute reconfiguration
     def reconfigure(self, config: ComponentConfig, dependencies: Mapping[ResourceName, ResourceBase]):
         attributes = struct_to_dict(config.attributes)
-        self.mode = Modes[attributes.get("mode")]
-        self.events = attributes.get("events")
-        self.robot_resources["_deps"] = dependencies
+        if attributes.get("mode"):
+            self.mode = attributes.get("mode")
+
+        dict_events = attributes.get("events")
+        for e in dict_events:
+            event = Event(**e)
+            LOGGER.info(event.name)
+            self.events.append(event)
+        self.robot_resources['_deps'] = dependencies
         asyncio.ensure_future(self.manage_events())
         return
 
     async def manage_events(self):
+        LOGGER.info("Starting SAVCAM event loop")
         while True:
             for event in self.events:
                 if ((self.mode in event.modes) and ((event.is_triggered == False) or ((event.is_triggered == True) and ((time.time - event.last_triggered) >= event.debounce_interval_secs)))):
@@ -83,7 +114,7 @@ class eventManager(Generic, Reconfigurable):
                     rule_results = []
                     for rule in event.rules:
                         rule_results.append(await rules.eval_rule(rule, self.robot_resources))
-                    if rules.logical_trigger(event.rule_logic_type, rule_results):
+                    if rules.logical_trigger(event.rule_logic_type, rule_results) == True:
                         event.is_triggered = True
                         event.last_triggered = time.time
                         for n in event.notifications:

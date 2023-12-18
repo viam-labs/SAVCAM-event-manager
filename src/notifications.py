@@ -18,14 +18,23 @@ class NotificationSMS():
     url: str
     carrier: str
     phone: str
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            self.__dict__[key] = value
 
 class NotificationEmail():
     type: str="email"
     address: str
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            self.__dict__[key] = value
 
 class NotificationWebhookGET():
     type: str="webhook_get"
     url: str
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            self.__dict__[key] = value
 
 def notify(event_name:str, notification:NotificationEmail|NotificationSMS|NotificationWebhookGET):
 
