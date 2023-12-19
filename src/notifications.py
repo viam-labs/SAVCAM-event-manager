@@ -1,7 +1,10 @@
-import subprocess
 import urllib.request
 
-from email.message import EmailMessage
+from email.mime.text import MIMEText
+from subprocess import Popen, PIPE
+from viam.logging import getLogger
+
+LOGGER = getLogger(__name__)
 
 # att|verizon|sprint|tmobile|boost|metropcs
 carrier_email_gateways = {
@@ -50,9 +53,7 @@ def notify(event_name:str, notification:NotificationEmail|NotificationSMS|Notifi
 
 
 def send_email(event_name:str, notification:NotificationEmail|NotificationSMS, is_sms:bool):
-    msg = EmailMessage()
-    msg.set_content("Event triggered!")
-    msg['From'] = "savcam@viam.com"
+    msg = MIMEText("Event triggered!")
     if is_sms:
         to_address = notification.phone + "@" + carrier_email_gateways[notification.carrier]
     else:
@@ -60,5 +61,8 @@ def send_email(event_name:str, notification:NotificationEmail|NotificationSMS, i
     msg['To'] = to_address
     msg['Subject'] = "SAVCAM event: " + event_name
 
-    sendmail_location = "/usr/sbin/sendmail"
-    subprocess.run([sendmail_location, "-t", "-oi"], input=msg.as_bytes())
+    try:
+        p = Popen(["/usr/sbin/sendmail", "-t", "-oi"], stdin=PIPE, universal_newlines=True)
+        p.communicate(msg.as_string())
+    except Exception as e:
+        LOGGER.error(e.output)        

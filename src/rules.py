@@ -61,7 +61,6 @@ async def eval_rule(rule:RuleTime|RuleDetector|RuleClassifier, resources):
             if resources.get(rule.detector) == None:
                 # initialize detector if it is not already
                 detectorName = VisionClient.get_resource_name(rule.detector)
-                LOGGER.info(resources["_deps"])
                 actual_detector = resources['_deps'][detectorName]
                 resources[rule.detector] = cast(VisionClient, actual_detector)
             for camera in rule.cameras:

@@ -29,7 +29,7 @@ class Modes(Enum):
 class Event():
     name: str
     is_triggered: bool = False
-    last_triggered: time = time.gmtime(0)
+    last_triggered: float = 0
     modes: list = ["home"]
     debounce_interval_secs: int = 300
     rule_logic_type: str = 'AND'
@@ -40,7 +40,7 @@ class Event():
         for key, value in kwargs.items():
             if isinstance(value, list):
                 if key == "notifications":
-                    self.__dict__[key] = []
+                    self.__dict__["notifications"] = []
                     for item in value:
                         if item["type"] == "sms":
                             self.__dict__[key].append(notifications.NotificationSMS(**item))
@@ -49,7 +49,7 @@ class Event():
                         elif item["type"] == "webhook_get":
                             self.__dict__[key].append(notifications.NotificationWebhookGET(**item))
                 elif key == "rules":
-                    self.__dict__[key] = []
+                    self.__dict__["rules"] = []
                     for item in value:
                         if item["type"] == "detection":
                             self.__dict__[key].append(rules.RuleDetector(**item))
@@ -98,7 +98,6 @@ class eventManager(Generic, Reconfigurable):
         dict_events = attributes.get("events")
         for e in dict_events:
             event = Event(**e)
-            LOGGER.info(event.name)
             self.events.append(event)
         self.robot_resources['_deps'] = dependencies
         asyncio.ensure_future(self.manage_events())
@@ -108,7 +107,7 @@ class eventManager(Generic, Reconfigurable):
         LOGGER.info("Starting SAVCAM event loop")
         while True:
             for event in self.events:
-                if ((self.mode in event.modes) and ((event.is_triggered == False) or ((event.is_triggered == True) and ((time.time - event.last_triggered) >= event.debounce_interval_secs)))):
+                if ((self.mode in event.modes) and ((event.is_triggered == False) or ((event.is_triggered == True) and ((time.time() - event.last_triggered) >= event.debounce_interval_secs)))):
                     # reset trigger before evaluating
                     event.is_triggered = False
                     rule_results = []
@@ -116,11 +115,10 @@ class eventManager(Generic, Reconfigurable):
                         rule_results.append(await rules.eval_rule(rule, self.robot_resources))
                     if rules.logical_trigger(event.rule_logic_type, rule_results) == True:
                         event.is_triggered = True
-                        event.last_triggered = time.time
+                        event.last_triggered = time.time()
                         for n in event.notifications:
+                            LOGGER.info(n.type)
                             notifications.notify(event.name, n)
-                            return
-        return
     
     async def do_command(
                 self,
