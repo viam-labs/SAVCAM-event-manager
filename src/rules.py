@@ -1,10 +1,10 @@
 import re
-import os
-import time
+
 from datetime import datetime
 from typing import cast
 from PIL import Image
 from . import logic
+from . import images
 
 from viam.components.camera import Camera
 from viam.services.vision import VisionClient, Detection, Classification
@@ -66,7 +66,7 @@ async def eval_rule(rule:RuleTime|RuleDetector|RuleClassifier, event_name, resou
             for camera in rule.cameras:
                 cam = _get_camera(camera, resources)
                 img = await cam.get_image()
-                _push_buffer(resources, camera, img, event_name)
+                images.push_buffer(resources, camera, img, event_name)
 
                 detections = await resources[detector].get_detections(img)
                 d: Detection
@@ -79,7 +79,7 @@ async def eval_rule(rule:RuleTime|RuleDetector|RuleClassifier, event_name, resou
             for camera in rule.cameras:
                 cam = _get_camera(camera, resources)
                 img = await cam.get_image()
-                _push_buffer(resources, camera, img, event_name)
+                images.push_buffer(resources, camera, img, event_name)
 
                 classifications = await resources[classifier].get_classifications(img, 3)
                 c: Classification
@@ -107,18 +107,3 @@ def _get_vision_service(name, resources):
         # initialize if it is not already
         resources[actual] = cast(VisionClient, actual)
     return resources[actual]
-
-def _push_buffer(resources, camera, img, event_name):
-    camera_buffer = (camera + event_name + "_buffer").replace(' ','_')
-    if resources.get(camera_buffer) == None:
-        # set buffer position to 0
-        resources[camera_buffer] = 0
-    else:
-        resources[camera_buffer] = resources[camera_buffer] + 1
-        if resources[camera_buffer] >= CAM_BUFFER_SIZE:
-            resources[camera_buffer] = 0
-    
-    out_dir = '/tmp/' + camera_buffer
-    if not os.path.isdir(out_dir):
-        os.mkdir(out_dir)
-    img.save(out_dir + '/' + str(resources[camera_buffer]) + '.jpg')

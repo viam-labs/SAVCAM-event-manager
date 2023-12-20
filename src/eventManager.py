@@ -15,8 +15,8 @@ from viam.logging import getLogger
 
 from . import rules
 from . import notifications
+from . import images
 
-import shutil
 import time
 import asyncio
 from enum import Enum
@@ -121,13 +121,13 @@ class eventManager(Generic, Reconfigurable):
                     if rules.logical_trigger(event.rule_logic_type, rule_results) == True:
                         event.is_triggered = True
                         event.last_triggered = time.time()
-                        event_id = str(time.time())
+                        event_id = str(int(time.time()))
                         # write image sequences leading up to event
                         rule_index = 0
                         for rule in event.rules:
                             if rule_results[rule_index] == True and hasattr(rule, 'cameras'):
                                 for c in rule.cameras:
-                                    self._copy_image_sequence(c, event.name, event_id)
+                                    images.copy_image_sequence(c, event.name, event_id)
                             rule_index = rule_index + 1
                         for n in event.notifications:
                             LOGGER.info(n.type)
@@ -142,8 +142,3 @@ class eventManager(Generic, Reconfigurable):
             ) -> Mapping[str, ValueTypes]:
         return
     
-    def _copy_image_sequence(self, camera, event_name, event_id):
-        camera_buffer = (camera + event_name + "_buffer").replace(' ','_')
-        src_dir = '/tmp/' + camera_buffer
-        out_dir = src_dir + event_id
-        shutil.copytree(src_dir, out_dir)
