@@ -39,7 +39,7 @@ The following example
             ],
             "rules": [
                 {
-                    "type": "detector",
+                    "type": "detection",
                     "detector": "effdet",
                     "confidence_pct": 0.8,
                     "class_regex": "cat|dog",                    

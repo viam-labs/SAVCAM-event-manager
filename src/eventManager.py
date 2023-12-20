@@ -16,9 +16,11 @@ from viam.logging import getLogger
 from . import rules
 from . import notifications
 
+import shutil
 import time
 import asyncio
 from enum import Enum
+from PIL import Image
 
 LOGGER = getLogger(__name__)
 
@@ -100,22 +102,33 @@ class eventManager(Generic, Reconfigurable):
             event = Event(**e)
             self.events.append(event)
         self.robot_resources['_deps'] = dependencies
+        self.robot_resources['buffers'] = {}
         asyncio.ensure_future(self.manage_events())
         return
 
     async def manage_events(self):
         LOGGER.info("Starting SAVCAM event loop")
         while True:
+            event: Event
             for event in self.events:
                 if ((self.mode in event.modes) and ((event.is_triggered == False) or ((event.is_triggered == True) and ((time.time() - event.last_triggered) >= event.debounce_interval_secs)))):
                     # reset trigger before evaluating
                     event.is_triggered = False
                     rule_results = []
                     for rule in event.rules:
-                        rule_results.append(await rules.eval_rule(rule, self.robot_resources))
+                        result = await rules.eval_rule(rule, event.name, self.robot_resources)
+                        rule_results.append(result)
                     if rules.logical_trigger(event.rule_logic_type, rule_results) == True:
                         event.is_triggered = True
                         event.last_triggered = time.time()
+                        event_id = str(time.time())
+                        # write image sequences leading up to event
+                        rule_index = 0
+                        for rule in event.rules:
+                            if rule_results[rule_index] == True and hasattr(rule, 'cameras'):
+                                for c in rule.cameras:
+                                    self._copy_image_sequence(c, event.name, event_id)
+                            rule_index = rule_index + 1
                         for n in event.notifications:
                             LOGGER.info(n.type)
                             notifications.notify(event.name, n)
@@ -128,3 +141,9 @@ class eventManager(Generic, Reconfigurable):
                 **kwargs
             ) -> Mapping[str, ValueTypes]:
         return
+    
+    def _copy_image_sequence(self, camera, event_name, event_id):
+        camera_buffer = (camera + event_name + "_buffer").replace(' ','_')
+        src_dir = '/tmp/' + camera_buffer
+        out_dir = src_dir + event_id
+        shutil.copytree(src_dir, out_dir)
