@@ -121,4 +121,4 @@ def _push_buffer(resources, camera, img, event_name):
     out_dir = '/tmp/' + camera_buffer
     if not os.path.isdir(out_dir):
         os.mkdir(out_dir)
-    img.save(out_dir + '/' + camera_buffer + '_' + str(resources[camera_buffer]) + '.jpg')
+    img.save(out_dir + '/' + str(resources[camera_buffer]) + '.jpg')
