@@ -74,6 +74,7 @@ class eventManager(Generic, Reconfigurable):
     mode: Modes = "home"
     events = []
     robot_resources = {}
+    run_loop = bool = True
 
     # Constructor
     @classmethod
@@ -93,6 +94,7 @@ class eventManager(Generic, Reconfigurable):
 
     # Handles attribute reconfiguration
     def reconfigure(self, config: ComponentConfig, dependencies: Mapping[ResourceName, ResourceBase]):
+        self.run_loop = False
         attributes = struct_to_dict(config.attributes)
         if attributes.get("mode"):
             self.mode = attributes.get("mode")
@@ -103,12 +105,13 @@ class eventManager(Generic, Reconfigurable):
             self.events.append(event)
         self.robot_resources['_deps'] = dependencies
         self.robot_resources['buffers'] = {}
+        self.run_loop = True
         asyncio.ensure_future(self.manage_events())
         return
 
     async def manage_events(self):
         LOGGER.info("Starting SAVCAM event loop")
-        while True:
+        while self.run_loop:
             event: Event
             for event in self.events:
                 if ((self.mode in event.modes) and ((event.is_triggered == False) or ((event.is_triggered == True) and ((time.time() - event.last_triggered) >= event.debounce_interval_secs)))):
@@ -122,6 +125,8 @@ class eventManager(Generic, Reconfigurable):
                         event.is_triggered = True
                         event.last_triggered = time.time()
                         event_id = str(int(time.time()))
+                        # sleep for a second in order to capture a bit more images
+                        await asyncio.sleep(1)
                         # write image sequences leading up to event
                         rule_index = 0
                         for rule in event.rules:
@@ -132,7 +137,9 @@ class eventManager(Generic, Reconfigurable):
                         for n in event.notifications:
                             LOGGER.info(n.type)
                             notifications.notify(event.name, n)
-    
+                    await asyncio.sleep(.05)
+                else:
+                    await asyncio.sleep(.5)
     async def do_command(
                 self,
                 command: Mapping[str, ValueTypes],

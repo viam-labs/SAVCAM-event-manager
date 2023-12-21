@@ -1,4 +1,5 @@
 import re
+import asyncio
 
 from datetime import datetime
 from typing import cast
@@ -51,6 +52,10 @@ class RuleTime():
             else:
                 self.__dict__[key] = value
 
+class CameraCache():
+    camera: Camera
+    last_image: Image
+
 async def eval_rule(rule:RuleTime|RuleDetector|RuleClassifier, event_name, resources):
     triggered = False
 
@@ -63,12 +68,11 @@ async def eval_rule(rule:RuleTime|RuleDetector|RuleClassifier, event_name, resou
                     triggered = True   
         case "detection":
             detector = _get_vision_service(rule.detector, resources)
-            for camera in rule.cameras:
-                cam = _get_camera(camera, resources)
-                img = await cam.get_image()
-                images.push_buffer(resources, camera, img, event_name)
+            for camera_name in rule.cameras:
+                cam = await _get_camera(camera_name, resources)
+                img = cam.last_image
 
-                detections = await resources[detector].get_detections(img)
+                detections = await detector.get_detections(img)
                 d: Detection
                 for d in detections:
                     if (d.confidence >= rule.confidence_pct) and re.search(rule.class_regex, d.class_name):
@@ -76,12 +80,11 @@ async def eval_rule(rule:RuleTime|RuleDetector|RuleClassifier, event_name, resou
                         triggered = True
         case "classification":
             classifier = _get_vision_service(rule.classifier, resources)
-            for camera in rule.cameras:
-                cam = _get_camera(camera, resources)
-                img = await cam.get_image()
-                images.push_buffer(resources, camera, img, event_name)
+            for camera_name in rule.cameras:
+                cam = await _get_camera(camera_name, resources)
+                img = cam.last_image
 
-                classifications = await resources[classifier].get_classifications(img, 3)
+                classifications = await classifier.get_classifications(img, 3)
                 c: Classification
                 for c in classifications:
                     if (c.confidence >= rule.confidence_pct) and re.search(rule.class_regex, c.class_name):
@@ -94,12 +97,15 @@ def logical_trigger(logic_type, list):
     logic_function = getattr(logic, logic_type)
     return logic_function(list)
 
-def _get_camera(camera, resources):
-    actual_camera = resources['_deps'][Camera.get_resource_name(camera)]
-    if resources.get(actual_camera) == None:
+async def _get_camera(camera_name, resources) -> CameraCache:
+    if resources.get(camera_name) == None:
         # initialize camera if it is not already
-        resources[actual_camera] = cast(Camera, actual_camera)
-    return resources[actual_camera]
+        actual_camera = resources['_deps'][Camera.get_resource_name(camera_name)]
+        resources[camera_name] = CameraCache
+        resources[camera_name].camera = cast(Camera, actual_camera)
+        resources[camera_name].last_image = await resources[camera_name].camera.get_image()
+        asyncio.ensure_future(_cam_image_loop(resources, camera_name))
+    return resources[camera_name]
 
 def _get_vision_service(name, resources):
     actual = resources['_deps'][VisionClient.get_resource_name(name)]
@@ -107,3 +113,10 @@ def _get_vision_service(name, resources):
         # initialize if it is not already
         resources[actual] = cast(VisionClient, actual)
     return resources[actual]
+
+async def _cam_image_loop(resources, cam_name):
+    LOGGER.info("START CAM LOOP")
+    while True:
+        resources[cam_name].last_image = await resources[cam_name].camera.get_image()
+        images.push_buffer(resources, cam_name, resources[cam_name].last_image)
+        await asyncio.sleep(.005)
