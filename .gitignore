@@ -160,3 +160,4 @@ cython_debug/
 #.idea/
 viam-env
 .installed
+test.py

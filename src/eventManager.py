@@ -15,7 +15,7 @@ from viam.logging import getLogger
 
 from . import rules
 from . import notifications
-from . import images
+from . import triggered
 
 import time
 import asyncio
@@ -132,7 +132,7 @@ class eventManager(Generic, Reconfigurable):
                         for rule in event.rules:
                             if rule_results[rule_index] == True and hasattr(rule, 'cameras'):
                                 for c in rule.cameras:
-                                    images.copy_image_sequence(c, event.name, event_id)
+                                    triggered.copy_image_sequence(c, event.name, event_id)
                             rule_index = rule_index + 1
                         for n in event.notifications:
                             LOGGER.info(n.type)
@@ -147,5 +147,12 @@ class eventManager(Generic, Reconfigurable):
                 timeout: Optional[float] = None,
                 **kwargs
             ) -> Mapping[str, ValueTypes]:
-        return
-    
+        result = {}
+        for name, args in command.items():
+            if name == "get_triggered":
+                triggered_detail = await triggered.get_triggered(num=args["num"], camera=args["camera"], event=args["event"])
+                result["triggered"] = triggered_detail
+            elif name == "clear_triggered":
+                total = await triggered.delete(camera=args["camera"], event=args["event"])
+                result["total"] = total
+        return result  

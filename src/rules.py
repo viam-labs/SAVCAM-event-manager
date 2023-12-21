@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import cast
 from PIL import Image
 from . import logic
-from . import images
+from . import triggered
 
 from viam.components.camera import Camera
 from viam.services.vision import VisionClient, Detection, Classification
@@ -118,5 +118,5 @@ async def _cam_image_loop(resources, cam_name):
     LOGGER.info("START CAM LOOP")
     while True:
         resources[cam_name].last_image = await resources[cam_name].camera.get_image()
-        images.push_buffer(resources, cam_name, resources[cam_name].last_image)
+        triggered.push_buffer(resources, cam_name, resources[cam_name].last_image)
         await asyncio.sleep(.005)

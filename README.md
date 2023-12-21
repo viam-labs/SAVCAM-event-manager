@@ -12,10 +12,77 @@ None
 
 The event-manager resource implements the [rdk generic API](https://github.com/viamrobotics/api/blob/main/proto/viam/component/generic/v1/generic.proto).
 
+### do_command()
+
+Examples:
+
+```python
+await em.do_command({"get_triggered": {"number": 5}}) # get 5 most recent triggered across all configured events
+await em.do_command({"get_triggered": {"number": 5, "camera": "ipcam"}}) # get 5 most recent triggered for "ipcam" across all configured events
+await em.do_command({"get_triggered": {"number": 5, "event": "Pets out at night"}}) # get 5 most recent triggers for event "Pets out at night"
+
+await em.do_command({"clear_triggered": {}}) # clear all triggered cross all configured events
+await em.do_command({"clear_triggered": {"camera": "ipcam"}}) # clear all triggered for "ipcam" across all configured events
+await em.do_command({"clear_triggered": {"event": "Pets out at night"}}) # clear all triggered for event "Pets out at night"
+```
+
+#### get_triggered
+
+Return details for triggered events in the following format:
+
+```json
+{ "triggered": 
+    [
+        {
+            "event": "Pets out at night",
+            "camera": "ipcam",
+            "time": 1703172467,
+            "id": "Pets_out_at_night_ipcam_1703172467"
+        }
+    ] 
+}
+```
+
+Note that "id" can be passed to a properly configured Viam [image-dir-cam](https://app.viam.com/module/viam-labs/image-dir-cam) as the "dir" *extra* param in order to view the captured camera stream.
+
+The following arguments are supported:
+
+*number* integer
+
+Number of triggered to return - default 5
+
+*camera* string
+
+Name of camera to return triggered for.  If not specified, will return triggered across all cameras.
+
+*event* string
+
+Name of event to return triggered for.  If not specified, will return triggered across all events.
+
+#### clear_triggered
+
+Clear triggered events, returning results details in the following format:
+
+```json
+{
+  "total": 10
+}
+```
+
+The following arguments are supported:
+
+*camera* string
+
+Name of camera to return triggered for.  If not specified, will return triggered across all cameras.
+
+*event* string
+
+Name of event to return triggered for.  If not specified, will return triggered across all events.
+
 ## Viam Service Configuration
 
 The service configuration uses JSON to describe rules around events.
-The following example
+The following example configures a single event named "Pets out at night" that triggers when an configured Vision services sees a cat or dog at night, sending an SMS and IFTTT webhook.
 
 ```json
 {
@@ -141,7 +208,3 @@ If *type* is **classification**, *classifier* (name of vision service classifier
 Note that classifier and cameras must be configured in *depends_on*.
 
 If *type* is **time**, *ranges* must be defined, which is a list of *start_hour* and *end_hour*, which are integers representing the start hour in UTC.
-
-## Troubleshooting
-
-Add troubleshooting notes here.
