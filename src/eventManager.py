@@ -150,9 +150,9 @@ class eventManager(Generic, Reconfigurable):
         result = {}
         for name, args in command.items():
             if name == "get_triggered":
-                triggered_detail = await triggered.get_triggered(num=args["num"], camera=args["camera"], event=args["event"])
+                triggered_detail = await triggered.get_triggered(num=args.get("number",5), camera=args.get("camera",None), event=args.get("event",None))
                 result["triggered"] = triggered_detail
             elif name == "clear_triggered":
-                total = await triggered.delete(camera=args["camera"], event=args["event"])
+                total = await triggered.delete(camera=args.get("camera",None), event=args.get("event",None))
                 result["total"] = total
         return result  
