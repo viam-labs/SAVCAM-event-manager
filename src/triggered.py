@@ -36,13 +36,13 @@ async def get_triggered(camera:str=None, event:str=None, num:int=5):
 
     dsearch = lambda f: (os.path.isdir(f) and re.match(pattern, f))
     mtime = lambda f: os.stat(os.path.join(ROOT_DIR, f)).st_mtime
-    all_matched = sorted(filter(dsearch, [os.path.join(ROOT_DIR, f) for f in os.listdir(ROOT_DIR)]), key=mtime)
+    all_matched = sorted(filter(dsearch, [os.path.join(ROOT_DIR, f) for f in os.listdir(ROOT_DIR)]), key=mtime, reverse=True)
     matched = []
     if len(all_matched) < num:
         num = len(all_matched)
     for x in range(num):
         spl = all_matched[x].split('--')
-        matched.append({"event": spl[1], "camera": spl[2], "time": spl[3], "id": all_matched[x].replace(ROOT_DIR + '/', '') })
+        matched.append({"event": spl[1].replace('_', ' '), "camera": spl[2], "time": spl[3], "id": all_matched[x].replace(ROOT_DIR + '/', '') })
     return matched
 
 async def delete(camera:str=None, event:str=None):
