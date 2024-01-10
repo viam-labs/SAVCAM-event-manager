@@ -35,8 +35,8 @@ async def get_triggered(camera:str=None, event:str=None, num:int=5):
         pattern = pattern + "--" + camera + "--.*"
 
     dsearch = lambda f: (os.path.isdir(f) and re.match(pattern, f))
-    mtime = lambda f: os.stat(os.path.join(ROOT_DIR, f)).st_mtime
-    all_matched = sorted(filter(dsearch, [os.path.join(ROOT_DIR, f) for f in os.listdir(ROOT_DIR)]), key=mtime, reverse=True)
+    ctime = lambda f: os.stat(os.path.join(ROOT_DIR, f)).st_ctime
+    all_matched = sorted(filter(dsearch, [os.path.join(ROOT_DIR, f) for f in os.listdir(ROOT_DIR)]), key=ctime, reverse=True)
     matched = []
     if len(all_matched) < num:
         num = len(all_matched)
