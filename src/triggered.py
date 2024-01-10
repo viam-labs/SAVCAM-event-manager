@@ -1,8 +1,11 @@
 import os
 import shutil
 import re
+from viam.logging import getLogger
 
-CAM_BUFFER_SIZE=150
+LOGGER = getLogger(__name__)
+
+CAM_BUFFER_SIZE=75
 ROOT_DIR = '/tmp'
 
 def push_buffer(resources, cam_name, img):
@@ -40,7 +43,7 @@ async def get_triggered(camera:str=None, event:str=None, num:int=5):
     matched = []
     if len(all_matched) < num:
         num = len(all_matched)
-    for x in range(num):
+    for x in range(int(num)):
         spl = all_matched[x].split('--')
         matched.append({"event": spl[1].replace('_', ' '), "camera": spl[2], "time": spl[3], "id": all_matched[x].replace(ROOT_DIR + '/', '') })
     return matched

@@ -12,7 +12,7 @@ from viam.services.vision import VisionClient, Detection, Classification
 from viam.logging import getLogger
 
 LOGGER = getLogger(__name__)
-CAM_BUFFER_SIZE = 150
+CAM_BUFFER_SIZE = 75
 
 class TimeRange():
     start_hour: int
