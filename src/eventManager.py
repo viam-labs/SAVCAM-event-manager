@@ -153,6 +153,6 @@ class eventManager(Generic, Reconfigurable):
                 triggered_detail = await triggered.get_triggered(num=args.get("number",5), camera=args.get("camera",None), event=args.get("event",None))
                 result["triggered"] = triggered_detail
             elif name == "clear_triggered":
-                total = await triggered.delete(camera=args.get("camera",None), event=args.get("event",None))
+                total = await triggered.delete(camera=args.get("camera",None), event=args.get("event",None), id=args.get("id",None))
                 result["total"] = total
         return result  

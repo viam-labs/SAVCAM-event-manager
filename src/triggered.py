@@ -31,11 +31,7 @@ def copy_image_sequence(cam_name, event_name, event_id):
     shutil.copytree(src_dir, out_dir)
 
 async def get_triggered(camera:str=None, event:str=None, num:int=5):
-    pattern = ROOT_DIR + '/SAVCAM--.*'
-    if event != None:
-        pattern = pattern + "--" + event + "--.*"
-    if camera != None:
-        pattern = pattern + "--" + camera + "--.*"
+    pattern = _create_match_pattern(camera, event, None)
 
     dsearch = lambda f: (os.path.isdir(f) and re.match(pattern, f))
     ctime = lambda f: os.stat(os.path.join(ROOT_DIR, f)).st_ctime
@@ -48,12 +44,8 @@ async def get_triggered(camera:str=None, event:str=None, num:int=5):
         matched.append({"event": spl[1].replace('_', ' '), "camera": spl[2], "time": spl[3], "id": all_matched[x].replace(ROOT_DIR + '/', '') })
     return matched
 
-async def delete(camera:str=None, event:str=None):
-    pattern = ROOT_DIR + '/SAVCAM--.*'
-    if event != None:
-        pattern = pattern + "--" + event + "--.*"
-    if camera != None:
-        pattern = pattern + "--" + camera + "--.*"
+async def delete(camera:str=None, event:str=None, id:str=None):
+    pattern = _create_match_pattern(camera, event, id)
 
     dsearch = lambda f: (os.path.isdir(f) and re.match(pattern, f))
     all_matched = list(filter(dsearch, [os.path.join(ROOT_DIR, f) for f in os.listdir(ROOT_DIR)]))
@@ -63,3 +55,17 @@ async def delete(camera:str=None, event:str=None):
 
 def _name_clean(cam_name):
     return cam_name.replace(' ','_')
+
+def _create_match_pattern(camera:str=None, event:str=None, id:str=None):
+    pattern = ROOT_DIR + '/SAVCAM--'
+    if event != None:
+        pattern = pattern + event + "--"
+    else:
+        pattern = pattern + ".*--"
+    if camera != None:
+        pattern = pattern + camera + "--.*"
+    else:
+        pattern = pattern + ".*--.*"
+    if id != None:
+        pattern = ROOT_DIR + '/' + id
+    return pattern

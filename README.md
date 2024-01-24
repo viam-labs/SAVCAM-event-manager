@@ -73,11 +73,15 @@ The following arguments are supported:
 
 *camera* string
 
-Name of camera to return triggered for.  If not specified, will return triggered across all cameras.
+Name of camera to delete triggered for.  If not specified, will delete triggered across all cameras.
 
 *event* string
 
-Name of event to return triggered for.  If not specified, will return triggered across all events.
+Name of event to delete triggered for.  If not specified, will delete triggered across all events.
+
+*id* string
+
+ID of event to delete triggered for. If not specified, will delete triggered across all events and cameras (depending on what is passed for *event* and *camera*)
 
 ## Viam Service Configuration
 
