@@ -22,6 +22,7 @@ await em.do_command({"get_triggered": {"number": 5, "camera": "ipcam"}}) # get 5
 await em.do_command({"get_triggered": {"number": 5, "event": "Pets out at night"}}) # get 5 most recent triggers for event "Pets out at night"
 
 await em.do_command({"clear_triggered": {}}) # clear all triggered cross all configured events
+await em.do_command({"clear_triggered": {"id": "SAVCAM--my_event--ipcam--1705448784"}}) # clear a specific triggered event
 await em.do_command({"clear_triggered": {"camera": "ipcam"}}) # clear all triggered for "ipcam" across all configured events
 await em.do_command({"clear_triggered": {"event": "Pets out at night"}}) # clear all triggered for event "Pets out at night"
 ```
@@ -212,3 +213,8 @@ If *type* is **classification**, *classifier* (name of vision service classifier
 Note that classifier and cameras must be configured in *depends_on*.
 
 If *type* is **time**, *ranges* must be defined, which is a list of *start_hour* and *end_hour*, which are integers representing the start hour in UTC.
+
+## Todo
+
+- Support storing data in Viam's cloud Data Service
+- Support other types of webhooks
