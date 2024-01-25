@@ -59,6 +59,10 @@ class Event():
                             self.__dict__[key].append(rules.RuleClassifier(**item))
                         elif item["type"] == "time":
                             self.__dict__[key].append(rules.RuleTime(**item))
+                elif key == "modes":
+                    self.__dict__["modes"] = []
+                    for item in value:
+                        self.__dict__[key].append(item)
             else:
                 self.__dict__[key] = value
 
