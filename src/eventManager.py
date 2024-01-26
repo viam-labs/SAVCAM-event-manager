@@ -103,6 +103,7 @@ class eventManager(Generic, Reconfigurable):
         if attributes.get("mode"):
             self.mode = attributes.get("mode")
 
+        self.events = []
         dict_events = attributes.get("events")
         for e in dict_events:
             event = Event(**e)
