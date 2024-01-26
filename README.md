@@ -218,3 +218,5 @@ If *type* is **time**, *ranges* must be defined, which is a list of *start_hour*
 
 - Support storing data in Viam's cloud Data Service
 - Support other types of webhooks
+- Allow using 3rd-party email and SMS services for more reliable delivery
+- Include image in SMS/emails
