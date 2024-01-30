@@ -103,9 +103,10 @@ class eventManager(Generic, Reconfigurable):
 
         self.events = []
         dict_events = attributes.get("events")
-        for e in dict_events:
-            event = Event(**e)
-            self.events.append(event)
+        if dict_events is not None:
+            for e in dict_events:
+                event = Event(**e)
+                self.events.append(event)
         self.robot_resources['_deps'] = dependencies
         self.robot_resources['buffers'] = {}
         self.run_loop = True
