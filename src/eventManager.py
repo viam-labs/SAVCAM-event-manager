@@ -90,10 +90,6 @@ class eventManager(Generic, Reconfigurable):
     # Validates JSON Configuration
     @classmethod
     def validate(cls, config: ComponentConfig):
-        try:
-            mode = Modes[config.attributes.fields["mode"].string_value]
-        except:
-            raise Exception("mode is invalid")
         return
 
     # Handles attribute reconfiguration
@@ -102,6 +98,8 @@ class eventManager(Generic, Reconfigurable):
         attributes = struct_to_dict(config.attributes)
         if attributes.get("mode"):
             self.mode = attributes.get("mode")
+        else:
+            self.mode = 'home'
 
         self.events = []
         dict_events = attributes.get("events")
