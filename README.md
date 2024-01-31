@@ -4,6 +4,8 @@
 
 The model this module makes available is viam-labs:savcam:event-manager
 
+The SAVCAM event manager is normally used in conjunction with the [SAVCAM mobile app[(https://github.com/viam-labs/SAVCAM-app), which provides a user interface for configuring events, viewing camera feeds, and viewing alerts.
+
 ## Prerequisites
 
 None
