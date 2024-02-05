@@ -1,0 +1,13 @@
+{
+  "module_id": "viam-labs:savcam-event-manager",
+  "visibility": "public",
+  "url": "https://github.com/viam-labs/SAVCAM-event-manager",
+  "description": "SAVCAM (Smart AI Viam Camera) event manager provides eventing capabilities leveraging the Viam platform, any supported cameras, and Viam's Computer Vision service.  You can use this in conjunction with the SAVCAM mobile app (https://github.com/viam-labs/SAVCAM-app) for highly customizable security camera.",
+  "models": [
+    {
+      "api": "rdk:component:generic",
+      "model": "viam-labs:savcam:event-manager"
+    }
+  ],
+  "entrypoint": "run.sh"
+}
