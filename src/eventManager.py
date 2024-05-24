@@ -20,7 +20,6 @@ from . import triggered
 import time
 import asyncio
 from enum import Enum
-from PIL import Image
 
 LOGGER = getLogger(__name__)
 

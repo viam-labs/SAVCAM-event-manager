@@ -7,9 +7,10 @@ from PIL import Image
 from . import logic
 from . import triggered
 
-from viam.components.camera import Camera
+from viam.components.camera import Camera, ViamImage
 from viam.services.vision import VisionClient, Detection, Classification
 from viam.logging import getLogger
+from viam.media.utils.pil import viam_to_pil_image
 
 LOGGER = getLogger(__name__)
 CAM_BUFFER_SIZE = 75
@@ -54,7 +55,7 @@ class RuleTime():
 
 class CameraCache():
     camera: Camera
-    last_image: Image
+    last_image: ViamImage
 
 async def eval_rule(rule:RuleTime|RuleDetector|RuleClassifier, event_name, resources):
     triggered = False
@@ -118,5 +119,5 @@ async def _cam_image_loop(resources, cam_name):
     LOGGER.info("START CAM LOOP")
     while True:
         resources[cam_name].last_image = await resources[cam_name].camera.get_image()
-        triggered.push_buffer(resources, cam_name, resources[cam_name].last_image)
+        triggered.push_buffer(resources, cam_name, viam_to_pil_image(resources[cam_name].last_image))
         await asyncio.sleep(.005)
