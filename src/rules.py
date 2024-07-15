@@ -7,7 +7,8 @@ from PIL import Image
 from . import logic
 from . import triggered
 
-from viam.components.camera import Camera, ViamImage
+from viam.components.camera import Camera
+from viam.media.video import ViamImage
 from viam.services.vision import VisionClient, Detection, Classification
 from viam.logging import getLogger
 from viam.media.utils.pil import viam_to_pil_image
