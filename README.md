@@ -94,6 +94,10 @@ The following example configures a single event named "Pets out at night" that t
 ```json
 {
     "mode": "home",
+    "use_data_management": true,
+    "part_id": "mhj127",
+    "app_api_key": "my_app_key",
+    "app_api_key_id": "my_api_key_id",
     "events": [
         {
             "name": "Pets out at night",
@@ -147,6 +151,14 @@ Note that you will need to include specified required cameras or other component
 *enum home|away (default: "home")*
 
 Event manager mode, which is used in event evaluation based on configured event [modes](#modes)
+
+### use_data_management
+
+*boolean (default:false)*
+
+If set to true, will store image data and read image metadata from Viam data management.
+If false, will use disk storage.
+If true "part_id", "app_api_key", "app_api_key_id" must all be set.
 
 ### events
 

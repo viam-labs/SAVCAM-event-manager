@@ -1,6 +1,10 @@
 import os
 import shutil
 import re
+import asyncio
+from PIL import Image 
+import io
+
 from viam.logging import getLogger
 
 LOGGER = getLogger(__name__)
@@ -29,7 +33,36 @@ def copy_image_sequence(cam_name, event_name, event_id):
     src_dir = ROOT_DIR + '/' + camera_buffer
     out_dir = _name_clean(ROOT_DIR + '/SAVCAM--' + event_name + '--' + camera_buffer + '--' + event_id)
     shutil.copytree(src_dir, out_dir)
+    return out_dir
 
+async def send_data(cam_name, event_name, event_id, app_client, part_id, path):
+    start_index = _get_oldest_image_index(path)
+    end_index = _get_greatest_image_index(path)
+    LOGGER.error(f"START {start_index} END {end_index}")
+    index = start_index
+    sent_all = False
+    while sent_all == False:
+        f = str(index) + '.jpg'
+        im = Image.open(os.path.join(path, f))
+        buf = io.BytesIO()
+        im.save(buf, format='JPEG')
+        await app_client.data_client.file_upload(part_id=part_id, file_extension=".jpg", tags=[_name_clean(f"SAVCAM--{event_name}--{cam_name}--{event_id}")], data=buf.getvalue())
+        index = index + 1
+        if index == start_index:
+            sent_all = True 
+        if index > end_index:
+            index = 0
+    shutil.rmtree(path)
+    return
+
+def _get_oldest_image_index(requested_dir):
+    mtime = lambda f: os.stat(os.path.join(requested_dir, f)).st_mtime
+    return int(os.path.splitext(list(sorted(os.listdir(requested_dir), key=mtime))[0])[0])
+
+def _get_greatest_image_index(requested_dir):
+    index = lambda f: int(os.path.splitext(os.path.basename(os.path.splitext(os.path.join(requested_dir, f))[0]))[0])
+    return int(os.path.splitext(list(sorted(os.listdir(requested_dir), key=index))[-1])[0])
+    
 async def get_triggered(camera:str=None, event:str=None, num:int=5):
     pattern = _create_match_pattern(camera, event, None)
 

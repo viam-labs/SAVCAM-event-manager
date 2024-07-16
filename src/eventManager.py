@@ -7,6 +7,8 @@ from viam.proto.app.robot import ComponentConfig
 from viam.proto.common import ResourceName, Vector3
 from viam.resource.base import ResourceBase
 from viam.resource.types import Model, ModelFamily
+from viam.app.viam_client import ViamClient
+from viam.rpc.dial import DialOptions
 
 from viam.components.generic import Generic
 from viam.utils import ValueTypes, struct_to_dict
@@ -75,6 +77,11 @@ class eventManager(Generic, Reconfigurable):
     MODEL: ClassVar[Model] = Model(ModelFamily("viam-labs", "savcam"), "event-manager")
     
     mode: Modes = "home"
+    use_data_management: bool = False
+    app_client : None
+    api_key_id: str
+    api_key: str
+    part_id: str
     events = []
     robot_resources = {}
     run_loop = bool = True
@@ -94,6 +101,12 @@ class eventManager(Generic, Reconfigurable):
     # Handles attribute reconfiguration
     def reconfigure(self, config: ComponentConfig, dependencies: Mapping[ResourceName, ResourceBase]):
         self.run_loop = False
+
+        self.use_data_management = config.attributes.fields["use_data_management"].bool_value or False
+        self.api_key = config.attributes.fields["app_api_key"].string_value or ''
+        self.api_key_id = config.attributes.fields["app_api_key_id"].string_value or ''
+        self.part_id = config.attributes.fields["part_id"].string_value or ''
+
         attributes = struct_to_dict(config.attributes)
         if attributes.get("mode"):
             self.mode = attributes.get("mode")
@@ -112,8 +125,19 @@ class eventManager(Generic, Reconfigurable):
         asyncio.ensure_future(self.manage_events())
         return
 
+    async def viam_connect(self) -> ViamClient:
+        dial_options = DialOptions.with_api_key( 
+            api_key=self.api_key,
+            api_key_id=self.api_key_id
+        )
+        return await ViamClient.create_from_dial_options(dial_options)
+    
     async def manage_events(self):
         LOGGER.info("Starting SAVCAM event loop")
+        
+        if self.use_data_management:
+            self.app_client = await self.viam_connect()
+        
         while self.run_loop:
             event: Event
             for event in self.events:
@@ -135,7 +159,9 @@ class eventManager(Generic, Reconfigurable):
                         for rule in event.rules:
                             if rule_results[rule_index] == True and hasattr(rule, 'cameras'):
                                 for c in rule.cameras:
-                                    triggered.copy_image_sequence(c, event.name, event_id)
+                                    out_dir = triggered.copy_image_sequence(c, event.name, event_id)
+                                    if self.use_data_management:
+                                        await triggered.send_data(c, event.name, event_id, self.app_client, self.part_id, out_dir)
                             rule_index = rule_index + 1
                         for n in event.notifications:
                             LOGGER.info(n.type)
@@ -143,6 +169,7 @@ class eventManager(Generic, Reconfigurable):
                     await asyncio.sleep(.05)
                 else:
                     await asyncio.sleep(.5)
+
     async def do_command(
                 self,
                 command: Mapping[str, ValueTypes],
