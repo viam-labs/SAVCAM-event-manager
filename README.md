@@ -158,7 +158,7 @@ Event manager mode, which is used in event evaluation based on configured event 
 
 If set to true, will store image data and read image metadata from Viam data management.
 If false, will use disk storage.
-If true "part_id", "app_api_key", "app_api_key_id" must all be set.
+If true, "part_id", "app_api_key", "app_api_key_id" must all be set.
 
 ### events
 
@@ -230,7 +230,6 @@ If *type* is **time**, *ranges* must be defined, which is a list of *start_hour*
 
 ## Todo
 
-- Support storing data in Viam's cloud Data Service
 - Support other types of webhooks
 - Allow using 3rd-party email and SMS services for more reliable delivery
 - Include image in SMS/emails

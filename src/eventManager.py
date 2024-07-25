@@ -180,9 +180,15 @@ class eventManager(Generic, Reconfigurable):
         result = {}
         for name, args in command.items():
             if name == "get_triggered":
-                triggered_detail = await triggered.get_triggered(num=args.get("number",5), camera=args.get("camera",None), event=args.get("event",None))
+                if self.use_data_management:
+                    triggered_detail = await triggered.get_triggered_cloud(num=args.get("number",5), camera=args.get("camera",None), event=args.get("event",None), app_client=self.app_client)
+                else:
+                    triggered_detail = await triggered.get_triggered_filesystem(num=args.get("number",5), camera=args.get("camera",None), event=args.get("event",None))
                 result["triggered"] = triggered_detail
             elif name == "clear_triggered":
-                total = await triggered.delete(camera=args.get("camera",None), event=args.get("event",None), id=args.get("id",None))
+                if self.use_data_management:
+                    total = await triggered.delete_from_cloud(camera=args.get("camera",None), event=args.get("event",None), id=args.get("id",None), app_client=self.app_client)
+                else:
+                    total = await triggered.delete_from_filesystem(camera=args.get("camera",None), event=args.get("event",None), id=args.get("id",None))
                 result["total"] = total
         return result  
