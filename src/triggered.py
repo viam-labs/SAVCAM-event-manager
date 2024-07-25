@@ -65,7 +65,6 @@ def _get_greatest_image_index(requested_dir):
     
 async def get_triggered_filesystem(camera:str=None, event:str=None, num:int=5):
     pattern = _create_match_pattern(camera, event, None, True)
-
     dsearch = lambda f: (os.path.isdir(f) and re.match(pattern, f))
     ctime = lambda f: os.stat(os.path.join(ROOT_DIR, f)).st_ctime
     all_matched = sorted(filter(dsearch, [os.path.join(ROOT_DIR, f) for f in os.listdir(ROOT_DIR)]), key=ctime, reverse=True)
@@ -87,7 +86,7 @@ async def get_triggered_cloud(camera:str=None, event:str=None, num:int=5, app_cl
     for tag in tags:
         if re.match(pattern, tag):
             spl = tag.split('--')
-            matched.append({"event": spl[1].replace('_', ' '), "camera": spl[2], "time": spl[3], "id": tag })
+            matched.insert(0, {"event": spl[1].replace('_', ' '), "camera": spl[2], "time": spl[3], "id": tag })
     return matched
 
 async def delete_from_filesystem(camera:str=None, event:str=None, id:str=None):
