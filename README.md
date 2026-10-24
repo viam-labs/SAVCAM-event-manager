@@ -19,14 +19,28 @@ The event-manager resource implements the [rdk generic API](https://github.com/v
 Examples:
 
 ```python
-await em.do_command({"get_triggered": {"number": 5}}) # get 5 most recent triggered across all configured events
-await em.do_command({"get_triggered": {"number": 5, "camera": "ipcam"}}) # get 5 most recent triggered for "ipcam" across all configured events
-await em.do_command({"get_triggered": {"number": 5, "event": "Pets out at night"}}) # get 5 most recent triggers for event "Pets out at night"
+await em.do_command(
+    {"get_triggered": {"number": 5}}
+)  # get 5 most recent triggered across all configured events
+await em.do_command(
+    {"get_triggered": {"number": 5, "camera": "ipcam"}}
+)  # get 5 most recent triggered for "ipcam" across all configured events
+await em.do_command(
+    {"get_triggered": {"number": 5, "event": "Pets out at night"}}
+)  # get 5 most recent triggers for event "Pets out at night"
 
-await em.do_command({"clear_triggered": {}}) # clear all triggered cross all configured events
-await em.do_command({"clear_triggered": {"id": "SAVCAM--my_event--ipcam--1705448784"}}) # clear a specific triggered event
-await em.do_command({"clear_triggered": {"camera": "ipcam"}}) # clear all triggered for "ipcam" across all configured events
-await em.do_command({"clear_triggered": {"event": "Pets out at night"}}) # clear all triggered for event "Pets out at night"
+await em.do_command(
+    {"clear_triggered": {}}
+)  # clear all triggered cross all configured events
+await em.do_command(
+    {"clear_triggered": {"id": "SAVCAM--my_event--ipcam--1705448784"}}
+)  # clear a specific triggered event
+await em.do_command(
+    {"clear_triggered": {"camera": "ipcam"}}
+)  # clear all triggered for "ipcam" across all configured events
+await em.do_command(
+    {"clear_triggered": {"event": "Pets out at night"}}
+)  # clear all triggered for event "Pets out at night"
 ```
 
 #### get_triggered

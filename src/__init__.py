@@ -7,4 +7,8 @@ from viam.resource.registry import Registry, ResourceCreatorRegistration
 
 from .eventManager import eventManager
 
-Registry.register_resource_creator(Generic.API, eventManager.MODEL, ResourceCreatorRegistration(eventManager.new, eventManager.validate))
+Registry.register_resource_creator(
+    Generic.API,
+    eventManager.MODEL,
+    ResourceCreatorRegistration(eventManager.new, eventManager.validate),
+)

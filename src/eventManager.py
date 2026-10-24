@@ -1,4 +1,15 @@
-from typing import ClassVar, Mapping, Sequence, Any, Dict, Optional, Tuple, Final, List, cast
+from typing import (
+    ClassVar,
+    Mapping,
+    Sequence,
+    Any,
+    Dict,
+    Optional,
+    Tuple,
+    Final,
+    List,
+    cast,
+)
 from typing_extensions import Self
 from typing import Final
 
@@ -25,19 +36,25 @@ from enum import Enum
 
 LOGGER = getLogger(__name__)
 
+
 class Modes(Enum):
     home = 1
     away = 2
 
-class Event():
+
+class Event:
     name: str
     is_triggered: bool = False
     last_triggered: float = 0
     modes: list = ["home"]
     debounce_interval_secs: int = 300
-    rule_logic_type: str = 'AND'
-    notifications: list[notifications.NotificationSMS|notifications.NotificationEmail|notifications.NotificationWebhookGET]
-    rules: list[rules.RuleDetector|rules.RuleClassifier|rules.RuleTime]
+    rule_logic_type: str = "AND"
+    notifications: list[
+        notifications.NotificationSMS
+        | notifications.NotificationEmail
+        | notifications.NotificationWebhookGET
+    ]
+    rules: list[rules.RuleDetector | rules.RuleClassifier | rules.RuleTime]
 
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
@@ -46,11 +63,17 @@ class Event():
                     self.__dict__["notifications"] = []
                     for item in value:
                         if item["type"] == "sms":
-                            self.__dict__[key].append(notifications.NotificationSMS(**item))
+                            self.__dict__[key].append(
+                                notifications.NotificationSMS(**item)
+                            )
                         elif item["type"] == "email":
-                            self.__dict__[key].append(notifications.NotificationEmail(**item))
+                            self.__dict__[key].append(
+                                notifications.NotificationEmail(**item)
+                            )
                         elif item["type"] == "webhook_get":
-                            self.__dict__[key].append(notifications.NotificationWebhookGET(**item))
+                            self.__dict__[key].append(
+                                notifications.NotificationWebhookGET(**item)
+                            )
                 elif key == "rules":
                     self.__dict__["rules"] = []
                     for item in value:
@@ -67,18 +90,17 @@ class Event():
             else:
                 self.__dict__[key] = value
 
+
 class eventManager(Generic, Reconfigurable):
-    
     """
     Generic component, which represents any type of component that can executes arbitrary commands
     """
 
-
     MODEL: ClassVar[Model] = Model(ModelFamily("viam-labs", "savcam"), "event-manager")
-    
+
     mode: Modes = "home"
     use_data_management: bool = False
-    app_client : None
+    app_client: None
     api_key_id: str
     api_key: str
     part_id: str
@@ -88,7 +110,9 @@ class eventManager(Generic, Reconfigurable):
 
     # Constructor
     @classmethod
-    def new(cls, config: ComponentConfig, dependencies: Mapping[ResourceName, ResourceBase]) -> Self:
+    def new(
+        cls, config: ComponentConfig, dependencies: Mapping[ResourceName, ResourceBase]
+    ) -> Self:
         my_class = cls(config.name)
         my_class.reconfigure(config, dependencies)
         return my_class
@@ -99,19 +123,23 @@ class eventManager(Generic, Reconfigurable):
         return
 
     # Handles attribute reconfiguration
-    def reconfigure(self, config: ComponentConfig, dependencies: Mapping[ResourceName, ResourceBase]):
+    def reconfigure(
+        self, config: ComponentConfig, dependencies: Mapping[ResourceName, ResourceBase]
+    ):
         self.run_loop = False
 
-        self.use_data_management = config.attributes.fields["use_data_management"].bool_value or False
-        self.api_key = config.attributes.fields["app_api_key"].string_value or ''
-        self.api_key_id = config.attributes.fields["app_api_key_id"].string_value or ''
-        self.part_id = config.attributes.fields["part_id"].string_value or ''
+        self.use_data_management = (
+            config.attributes.fields["use_data_management"].bool_value or False
+        )
+        self.api_key = config.attributes.fields["app_api_key"].string_value or ""
+        self.api_key_id = config.attributes.fields["app_api_key_id"].string_value or ""
+        self.part_id = config.attributes.fields["part_id"].string_value or ""
 
         attributes = struct_to_dict(config.attributes)
         if attributes.get("mode"):
             self.mode = attributes.get("mode")
         else:
-            self.mode = 'home'
+            self.mode = "home"
 
         self.events = []
         dict_events = attributes.get("events")
@@ -119,36 +147,49 @@ class eventManager(Generic, Reconfigurable):
             for e in dict_events:
                 event = Event(**e)
                 self.events.append(event)
-        self.robot_resources['_deps'] = dependencies
-        self.robot_resources['buffers'] = {}
+        self.robot_resources["_deps"] = dependencies
+        self.robot_resources["buffers"] = {}
         self.run_loop = True
         asyncio.ensure_future(self.manage_events())
         return
 
     async def viam_connect(self) -> ViamClient:
-        dial_options = DialOptions.with_api_key( 
-            api_key=self.api_key,
-            api_key_id=self.api_key_id
+        dial_options = DialOptions.with_api_key(
+            api_key=self.api_key, api_key_id=self.api_key_id
         )
         return await ViamClient.create_from_dial_options(dial_options)
-    
+
     async def manage_events(self):
         LOGGER.info("Starting SAVCAM event loop")
-        
+
         if self.use_data_management:
             self.app_client = await self.viam_connect()
-        
+
         while self.run_loop:
             event: Event
             for event in self.events:
-                if ((self.mode in event.modes) and ((event.is_triggered == False) or ((event.is_triggered == True) and ((time.time() - event.last_triggered) >= event.debounce_interval_secs)))):
+                if (self.mode in event.modes) and (
+                    (event.is_triggered == False)
+                    or (
+                        (event.is_triggered == True)
+                        and (
+                            (time.time() - event.last_triggered)
+                            >= event.debounce_interval_secs
+                        )
+                    )
+                ):
                     # reset trigger before evaluating
                     event.is_triggered = False
                     rule_results = []
                     for rule in event.rules:
-                        result = await rules.eval_rule(rule, event.name, self.robot_resources)
+                        result = await rules.eval_rule(
+                            rule, event.name, self.robot_resources
+                        )
                         rule_results.append(result)
-                    if rules.logical_trigger(event.rule_logic_type, rule_results) == True:
+                    if (
+                        rules.logical_trigger(event.rule_logic_type, rule_results)
+                        == True
+                    ):
                         event.is_triggered = True
                         event.last_triggered = time.time()
                         event_id = str(int(time.time()))
@@ -157,38 +198,67 @@ class eventManager(Generic, Reconfigurable):
                         # write image sequences leading up to event
                         rule_index = 0
                         for rule in event.rules:
-                            if rule_results[rule_index] == True and hasattr(rule, 'cameras'):
+                            if rule_results[rule_index] == True and hasattr(
+                                rule, "cameras"
+                            ):
                                 for c in rule.cameras:
-                                    out_dir = triggered.copy_image_sequence(c, event.name, event_id)
+                                    out_dir = triggered.copy_image_sequence(
+                                        c, event.name, event_id
+                                    )
                                     if self.use_data_management:
-                                        await triggered.send_data(c, event.name, event_id, self.app_client, self.part_id, out_dir)
+                                        await triggered.send_data(
+                                            c,
+                                            event.name,
+                                            event_id,
+                                            self.app_client,
+                                            self.part_id,
+                                            out_dir,
+                                        )
                             rule_index = rule_index + 1
                         for n in event.notifications:
                             LOGGER.info(n.type)
                             notifications.notify(event.name, n)
-                    await asyncio.sleep(.05)
+                    await asyncio.sleep(0.05)
                 else:
-                    await asyncio.sleep(.5)
+                    await asyncio.sleep(0.5)
 
     async def do_command(
-                self,
-                command: Mapping[str, ValueTypes],
-                *,
-                timeout: Optional[float] = None,
-                **kwargs
-            ) -> Mapping[str, ValueTypes]:
+        self,
+        command: Mapping[str, ValueTypes],
+        *,
+        timeout: Optional[float] = None,
+        **kwargs,
+    ) -> Mapping[str, ValueTypes]:
         result = {}
         for name, args in command.items():
             if name == "get_triggered":
                 if self.use_data_management:
-                    triggered_detail = await triggered.get_triggered_cloud(num=args.get("number",5), camera=args.get("camera",None), event=args.get("event",None), app_client=self.app_client)
+                    triggered_detail = await triggered.get_triggered_cloud(
+                        num=args.get("number", 5),
+                        camera=args.get("camera", None),
+                        event=args.get("event", None),
+                        app_client=self.app_client,
+                    )
                 else:
-                    triggered_detail = await triggered.get_triggered_filesystem(num=args.get("number",5), camera=args.get("camera",None), event=args.get("event",None))
+                    triggered_detail = await triggered.get_triggered_filesystem(
+                        num=args.get("number", 5),
+                        camera=args.get("camera", None),
+                        event=args.get("event", None),
+                    )
                 result["triggered"] = triggered_detail
             elif name == "clear_triggered":
                 if self.use_data_management:
-                    total = await triggered.delete_from_cloud(camera=args.get("camera",None), event=args.get("event",None), id=args.get("id",None), app_client=self.app_client)
+                    total = await triggered.delete_from_cloud(
+                        camera=args.get("camera", None),
+                        event=args.get("event", None),
+                        id=args.get("id", None),
+                        app_client=self.app_client,
+                    )
                 else:
-                    total = await triggered.delete_from_filesystem(camera=args.get("camera",None), event=args.get("event",None), id=args.get("id",None))
+                    total = await triggered.delete_from_filesystem(
+                        camera=args.get("camera", None),
+                        event=args.get("event", None),
+                        id=args.get("id", None),
+                    )
                 result["total"] = total
-        return result  
+        return result
