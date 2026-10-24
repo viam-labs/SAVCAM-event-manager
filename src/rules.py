@@ -123,7 +123,7 @@ async def _get_camera(camera_name, resources) -> CameraCache:
         resources[camera_name] = CameraCache
         resources[camera_name].camera = cast(Camera, actual_camera)
         imgs, _ = await resources[camera_name].camera.get_images()
-        resources[camera_name].last_image = img[0]
+        resources[camera_name].last_image = imgs[0]
         asyncio.ensure_future(_cam_image_loop(resources, camera_name))
     return resources[camera_name]
 
@@ -139,8 +139,8 @@ def _get_vision_service(name, resources):
 async def _cam_image_loop(resources, cam_name):
     LOGGER.info("START CAM LOOP")
     while True:
-        imgs, _ = await resources[camera_name].camera.get_images()
-        resources[camera_name].last_image = img[0]
+        imgs, _ = await resources[cam_name].camera.get_images()
+        resources[cam_name].last_image = imgs[0]
         triggered.push_buffer(
             resources, cam_name, viam_to_pil_image(resources[cam_name].last_image)
         )
