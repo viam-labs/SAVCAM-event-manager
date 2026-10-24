@@ -1,12 +1,11 @@
-import os
-import shutil
-import re
-import asyncio
-from PIL import Image
-from viam.proto.app.data import Filter
 import io
+import os
+import re
+import shutil
 
+from PIL import Image
 from viam.logging import getLogger
+from viam.proto.app.data import Filter
 
 LOGGER = getLogger(__name__)
 

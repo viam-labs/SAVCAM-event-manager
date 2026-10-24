@@ -1,7 +1,7 @@
 import urllib.request
-
 from email.mime.text import MIMEText
-from subprocess import Popen, PIPE
+from subprocess import PIPE, Popen
+
 from viam.logging import getLogger
 
 LOGGER = getLogger(__name__)

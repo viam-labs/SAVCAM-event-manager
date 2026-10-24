@@ -1,38 +1,25 @@
+import asyncio
+import time
+from enum import Enum
 from typing import (
     ClassVar,
     Mapping,
-    Sequence,
-    Any,
-    Dict,
     Optional,
-    Tuple,
-    Final,
-    List,
-    cast,
 )
-from typing_extensions import Self
-from typing import Final
 
+from typing_extensions import Self
+from viam.app.viam_client import ViamClient
+from viam.components.generic import Generic
+from viam.logging import getLogger
 from viam.module.types import Reconfigurable
 from viam.proto.app.robot import ComponentConfig
-from viam.proto.common import ResourceName, Vector3
+from viam.proto.common import ResourceName
 from viam.resource.base import ResourceBase
 from viam.resource.types import Model, ModelFamily
-from viam.app.viam_client import ViamClient
 from viam.rpc.dial import DialOptions
-
-from viam.components.generic import Generic
 from viam.utils import ValueTypes, struct_to_dict
 
-from viam.logging import getLogger
-
-from . import rules
-from . import notifications
-from . import triggered
-
-import time
-import asyncio
-from enum import Enum
+from . import notifications, rules, triggered
 
 LOGGER = getLogger(__name__)
 

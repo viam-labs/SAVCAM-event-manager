@@ -1,17 +1,15 @@
-import re
 import asyncio
-
+import re
 from datetime import datetime
 from typing import cast
-from PIL import Image
-from . import logic
-from . import triggered
 
 from viam.components.camera import Camera
-from viam.media.video import ViamImage
-from viam.services.vision import VisionClient, Detection, Classification
 from viam.logging import getLogger
 from viam.media.utils.pil import viam_to_pil_image
+from viam.media.video import ViamImage
+from viam.services.vision import Classification, Detection, VisionClient
+
+from . import logic, triggered
 
 LOGGER = getLogger(__name__)
 CAM_BUFFER_SIZE = 75
