@@ -16,7 +16,7 @@ ROOT_DIR = "/tmp"
 def push_buffer(resources, cam_name, img):
     camera_buffer = _name_clean(cam_name)
     buffer_index_label = camera_buffer + "_buffer"
-    if resources.get(buffer_index_label) == None:
+    if resources.get(buffer_index_label) is None:
         # set buffer position to 0
         resources[buffer_index_label] = 0
     else:
@@ -43,7 +43,7 @@ async def send_data(cam_name, event_name, event_id, app_client, part_id, path):
     end_index = _get_greatest_image_index(path)
     index = start_index
     sent_all = False
-    while sent_all == False:
+    while not sent_all:
         f = str(index) + ".jpg"
         im = Image.open(os.path.join(path, f))
         buf = io.BytesIO()
@@ -65,18 +65,22 @@ async def send_data(cam_name, event_name, event_id, app_client, part_id, path):
 
 
 def _get_oldest_image_index(requested_dir):
-    mtime = lambda f: os.stat(os.path.join(requested_dir, f)).st_mtime
+    def mtime(f):
+        return os.stat(os.path.join(requested_dir, f)).st_mtime
+
     return int(
         os.path.splitext(list(sorted(os.listdir(requested_dir), key=mtime))[0])[0]
     )
 
 
 def _get_greatest_image_index(requested_dir):
-    index = lambda f: int(
-        os.path.splitext(
-            os.path.basename(os.path.splitext(os.path.join(requested_dir, f))[0])
-        )[0]
-    )
+    def index(f):
+        return int(
+            os.path.splitext(
+                os.path.basename(os.path.splitext(os.path.join(requested_dir, f))[0])
+            )[0]
+        )
+
     return int(
         os.path.splitext(list(sorted(os.listdir(requested_dir), key=index))[-1])[0]
     )
@@ -84,8 +88,13 @@ def _get_greatest_image_index(requested_dir):
 
 async def get_triggered_filesystem(camera: str = None, event: str = None, num: int = 5):
     pattern = _create_match_pattern(camera, event, None, True)
-    dsearch = lambda f: os.path.isdir(f) and re.match(pattern, f)
-    ctime = lambda f: os.stat(os.path.join(ROOT_DIR, f)).st_ctime
+
+    def dsearch(f):
+        return os.path.isdir(f) and re.match(pattern, f)
+
+    def ctime(f):
+        return os.stat(os.path.join(ROOT_DIR, f)).st_ctime
+
     all_matched = sorted(
         filter(dsearch, [os.path.join(ROOT_DIR, f) for f in os.listdir(ROOT_DIR)]),
         key=ctime,
@@ -134,7 +143,9 @@ async def get_triggered_cloud(
 async def delete_from_filesystem(camera: str = None, event: str = None, id: str = None):
     pattern = _create_match_pattern(camera, event, id, True)
 
-    dsearch = lambda f: os.path.isdir(f) and re.match(pattern, f)
+    def dsearch(f):
+        return os.path.isdir(f) and re.match(pattern, f)
+
     all_matched = list(
         filter(dsearch, [os.path.join(ROOT_DIR, f) for f in os.listdir(ROOT_DIR)])
     )
@@ -155,10 +166,9 @@ async def delete_from_cloud(
     matched = []
     for tag in tags:
         if re.match(pattern, tag):
-            spl = tag.split("--")
             matched.append(tag)
 
-    resp = await app_client.data_client.remove_tags_from_binary_data_by_filter(
+    await app_client.data_client.remove_tags_from_binary_data_by_filter(
         tags=matched, filter=Filter(**filter_args)
     )
     return
@@ -172,18 +182,18 @@ def _create_match_pattern(
     camera: str = None, event: str = None, id: str = None, use_filesystem: bool = False
 ):
     prefix = ""
-    if use_filesystem == True:
+    if use_filesystem:
         prefix = ROOT_DIR + "/"
     pattern = prefix + "SAVCAM--"
-    if event != None:
+    if event is not None:
         pattern = pattern + event + "--"
     else:
         pattern = pattern + ".*--"
-    if camera != None:
+    if camera is not None:
         pattern = pattern + camera + "--.*"
     else:
         pattern = pattern + ".*--.*"
-    if id != None:
+    if id is not None:
         pattern = prefix + id
     return pattern
 

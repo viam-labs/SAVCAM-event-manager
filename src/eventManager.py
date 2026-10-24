@@ -156,9 +156,9 @@ class eventManager(Generic, Reconfigurable):
             event: Event
             for event in self.events:
                 if (self.mode in event.modes) and (
-                    (event.is_triggered == False)
+                    (not event.is_triggered)
                     or (
-                        (event.is_triggered == True)
+                        (event.is_triggered)
                         and (
                             (time.time() - event.last_triggered)
                             >= event.debounce_interval_secs
@@ -173,10 +173,7 @@ class eventManager(Generic, Reconfigurable):
                             rule, event.name, self.robot_resources
                         )
                         rule_results.append(result)
-                    if (
-                        rules.logical_trigger(event.rule_logic_type, rule_results)
-                        == True
-                    ):
+                    if rules.logical_trigger(event.rule_logic_type, rule_results):
                         event.is_triggered = True
                         event.last_triggered = time.time()
                         event_id = str(int(time.time()))
@@ -185,9 +182,7 @@ class eventManager(Generic, Reconfigurable):
                         # write image sequences leading up to event
                         rule_index = 0
                         for rule in event.rules:
-                            if rule_results[rule_index] == True and hasattr(
-                                rule, "cameras"
-                            ):
+                            if rule_results[rule_index] and hasattr(rule, "cameras"):
                                 for c in rule.cameras:
                                     out_dir = triggered.copy_image_sequence(
                                         c, event.name, event_id

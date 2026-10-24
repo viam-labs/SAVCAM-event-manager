@@ -117,7 +117,7 @@ def logical_trigger(logic_type, list):
 
 
 async def _get_camera(camera_name, resources) -> CameraCache:
-    if resources.get(camera_name) == None:
+    if resources.get(camera_name) is None:
         # initialize camera if it is not already
         actual_camera = resources["_deps"][Camera.get_resource_name(camera_name)]
         resources[camera_name] = CameraCache
@@ -130,7 +130,7 @@ async def _get_camera(camera_name, resources) -> CameraCache:
 
 def _get_vision_service(name, resources):
     actual = resources["_deps"][VisionClient.get_resource_name(name)]
-    if resources.get(actual) == None:
+    if resources.get(actual) is None:
         # initialize if it is not already
         resources[actual] = cast(VisionClient, actual)
     return resources[actual]

@@ -1,6 +1,6 @@
 def OR(list):
     for item in list:
-        if item == True:
+        if item:
             return True
     return False
 
@@ -8,7 +8,7 @@ def OR(list):
 def AND(list):
     result = True
     for item in list:
-        if item == False:
+        if not item:
             result = False
     return result
 
@@ -16,7 +16,7 @@ def AND(list):
 def XOR(list):
     true_count = 0
     for item in list:
-        if item == True:
+        if item:
             true_count = true_count + 1
     if true_count == 1:
         return True

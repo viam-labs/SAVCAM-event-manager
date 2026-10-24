@@ -57,7 +57,7 @@ def notify(
         case "sms":
             send_email(event_name, notification, True)
         case "webhook_get":
-            contents = urllib.request.urlopen(notification.url).read()
+            urllib.request.urlopen(notification.url).read()
 
     return
 
