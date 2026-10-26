@@ -67,9 +67,7 @@ class CameraCache:
     last_image: ViamImage
 
 
-async def eval_rule(
-    rule: RuleTime | RuleDetector | RuleClassifier, event_name, resources
-):
+async def eval_rule(rule: RuleTime | RuleDetector | RuleClassifier, event_name, resources):
     triggered = False
 
     match rule.type:
@@ -88,9 +86,7 @@ async def eval_rule(
                 detections = await detector.get_detections(img)
                 d: Detection
                 for d in detections:
-                    if (d.confidence >= rule.confidence_pct) and re.search(
-                        rule.class_regex, d.class_name
-                    ):
+                    if (d.confidence >= rule.confidence_pct) and re.search(rule.class_regex, d.class_name):
                         LOGGER.debug("Detection triggered")
                         triggered = True
         case "classification":
@@ -102,9 +98,7 @@ async def eval_rule(
                 classifications = await classifier.get_classifications(img, 3)
                 c: Classification
                 for c in classifications:
-                    if (c.confidence >= rule.confidence_pct) and re.search(
-                        rule.class_regex, c.class_name
-                    ):
+                    if (c.confidence >= rule.confidence_pct) and re.search(rule.class_regex, c.class_name):
                         LOGGER.debug("Classification triggered")
                         triggered = True
 
@@ -141,7 +135,5 @@ async def _cam_image_loop(resources, cam_name):
     while True:
         imgs, _ = await resources[cam_name].camera.get_images()
         resources[cam_name].last_image = imgs[0]
-        triggered.push_buffer(
-            resources, cam_name, viam_to_pil_image(resources[cam_name].last_image)
-        )
+        triggered.push_buffer(resources, cam_name, viam_to_pil_image(resources[cam_name].last_image))
         await asyncio.sleep(0.005)

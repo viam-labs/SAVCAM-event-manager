@@ -37,9 +37,7 @@ class Event:
     debounce_interval_secs: int = 300
     rule_logic_type: str = "AND"
     notifications: list[
-        notifications.NotificationSMS
-        | notifications.NotificationEmail
-        | notifications.NotificationWebhookGET
+        notifications.NotificationSMS | notifications.NotificationEmail | notifications.NotificationWebhookGET
     ]
     rules: list[rules.RuleDetector | rules.RuleClassifier | rules.RuleTime]
 
@@ -50,17 +48,11 @@ class Event:
                     self.__dict__["notifications"] = []
                     for item in value:
                         if item["type"] == "sms":
-                            self.__dict__[key].append(
-                                notifications.NotificationSMS(**item)
-                            )
+                            self.__dict__[key].append(notifications.NotificationSMS(**item))
                         elif item["type"] == "email":
-                            self.__dict__[key].append(
-                                notifications.NotificationEmail(**item)
-                            )
+                            self.__dict__[key].append(notifications.NotificationEmail(**item))
                         elif item["type"] == "webhook_get":
-                            self.__dict__[key].append(
-                                notifications.NotificationWebhookGET(**item)
-                            )
+                            self.__dict__[key].append(notifications.NotificationWebhookGET(**item))
                 elif key == "rules":
                     self.__dict__["rules"] = []
                     for item in value:
@@ -97,9 +89,7 @@ class eventManager(Generic, Reconfigurable):
 
     # Constructor
     @classmethod
-    def new(
-        cls, config: ComponentConfig, dependencies: Mapping[ResourceName, ResourceBase]
-    ) -> Self:
+    def new(cls, config: ComponentConfig, dependencies: Mapping[ResourceName, ResourceBase]) -> Self:
         my_class = cls(config.name)
         my_class.reconfigure(config, dependencies)
         return my_class
@@ -110,14 +100,10 @@ class eventManager(Generic, Reconfigurable):
         return
 
     # Handles attribute reconfiguration
-    def reconfigure(
-        self, config: ComponentConfig, dependencies: Mapping[ResourceName, ResourceBase]
-    ):
+    def reconfigure(self, config: ComponentConfig, dependencies: Mapping[ResourceName, ResourceBase]):
         self.run_loop = False
 
-        self.use_data_management = (
-            config.attributes.fields["use_data_management"].bool_value or False
-        )
+        self.use_data_management = config.attributes.fields["use_data_management"].bool_value or False
         self.api_key = config.attributes.fields["app_api_key"].string_value or ""
         self.api_key_id = config.attributes.fields["app_api_key_id"].string_value or ""
         self.part_id = config.attributes.fields["part_id"].string_value or ""
@@ -141,9 +127,7 @@ class eventManager(Generic, Reconfigurable):
         return
 
     async def viam_connect(self) -> ViamClient:
-        dial_options = DialOptions.with_api_key(
-            api_key=self.api_key, api_key_id=self.api_key_id
-        )
+        dial_options = DialOptions.with_api_key(api_key=self.api_key, api_key_id=self.api_key_id)
         return await ViamClient.create_from_dial_options(dial_options)
 
     async def manage_events(self):
@@ -157,21 +141,13 @@ class eventManager(Generic, Reconfigurable):
             for event in self.events:
                 if (self.mode in event.modes) and (
                     (not event.is_triggered)
-                    or (
-                        (event.is_triggered)
-                        and (
-                            (time.time() - event.last_triggered)
-                            >= event.debounce_interval_secs
-                        )
-                    )
+                    or ((event.is_triggered) and ((time.time() - event.last_triggered) >= event.debounce_interval_secs))
                 ):
                     # reset trigger before evaluating
                     event.is_triggered = False
                     rule_results = []
                     for rule in event.rules:
-                        result = await rules.eval_rule(
-                            rule, event.name, self.robot_resources
-                        )
+                        result = await rules.eval_rule(rule, event.name, self.robot_resources)
                         rule_results.append(result)
                     if rules.logical_trigger(event.rule_logic_type, rule_results):
                         event.is_triggered = True
@@ -184,9 +160,7 @@ class eventManager(Generic, Reconfigurable):
                         for rule in event.rules:
                             if rule_results[rule_index] and hasattr(rule, "cameras"):
                                 for c in rule.cameras:
-                                    out_dir = triggered.copy_image_sequence(
-                                        c, event.name, event_id
-                                    )
+                                    out_dir = triggered.copy_image_sequence(c, event.name, event_id)
                                     if self.use_data_management:
                                         await triggered.send_data(
                                             c,

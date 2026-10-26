@@ -46,10 +46,7 @@ class NotificationWebhookGET:
             self.__dict__[key] = value
 
 
-def notify(
-    event_name: str,
-    notification: NotificationEmail | NotificationSMS | NotificationWebhookGET,
-):
+def notify(event_name: str, notification: NotificationEmail | NotificationSMS | NotificationWebhookGET):
 
     match notification.type:
         case "email":
@@ -62,23 +59,17 @@ def notify(
     return
 
 
-def send_email(
-    event_name: str, notification: NotificationEmail | NotificationSMS, is_sms: bool
-):
+def send_email(event_name: str, notification: NotificationEmail | NotificationSMS, is_sms: bool):
     msg = MIMEText("Event triggered!")
     if is_sms:
-        to_address = (
-            notification.phone + "@" + carrier_email_gateways[notification.carrier]
-        )
+        to_address = notification.phone + "@" + carrier_email_gateways[notification.carrier]
     else:
         to_address = notification.address
     msg["To"] = to_address
     msg["Subject"] = "SAVCAM event: " + event_name
 
     try:
-        p = Popen(
-            ["/usr/sbin/sendmail", "-t", "-oi"], stdin=PIPE, universal_newlines=True
-        )
+        p = Popen(["/usr/sbin/sendmail", "-t", "-oi"], stdin=PIPE, universal_newlines=True)
         p.communicate(msg.as_string())
     except Exception as e:
         LOGGER.error(e.output)

@@ -68,22 +68,14 @@ def _get_oldest_image_index(requested_dir):
     def mtime(f):
         return os.stat(os.path.join(requested_dir, f)).st_mtime
 
-    return int(
-        os.path.splitext(list(sorted(os.listdir(requested_dir), key=mtime))[0])[0]
-    )
+    return int(os.path.splitext(list(sorted(os.listdir(requested_dir), key=mtime))[0])[0])
 
 
 def _get_greatest_image_index(requested_dir):
     def index(f):
-        return int(
-            os.path.splitext(
-                os.path.basename(os.path.splitext(os.path.join(requested_dir, f))[0])
-            )[0]
-        )
+        return int(os.path.splitext(os.path.basename(os.path.splitext(os.path.join(requested_dir, f))[0]))[0])
 
-    return int(
-        os.path.splitext(list(sorted(os.listdir(requested_dir), key=index))[-1])[0]
-    )
+    return int(os.path.splitext(list(sorted(os.listdir(requested_dir), key=index))[-1])[0])
 
 
 async def get_triggered_filesystem(camera: str = None, event: str = None, num: int = 5):
@@ -116,9 +108,7 @@ async def get_triggered_filesystem(camera: str = None, event: str = None, num: i
     return matched
 
 
-async def get_triggered_cloud(
-    camera: str = None, event: str = None, num: int = 5, app_client: str = None
-):
+async def get_triggered_cloud(camera: str = None, event: str = None, num: int = 5, app_client: str = None):
     pattern = _create_match_pattern(camera, event, None, False)
     filter_args = {}
     if camera:
@@ -146,18 +136,14 @@ async def delete_from_filesystem(camera: str = None, event: str = None, id: str 
     def dsearch(f):
         return os.path.isdir(f) and re.match(pattern, f)
 
-    all_matched = list(
-        filter(dsearch, [os.path.join(ROOT_DIR, f) for f in os.listdir(ROOT_DIR)])
-    )
+    all_matched = list(filter(dsearch, [os.path.join(ROOT_DIR, f) for f in os.listdir(ROOT_DIR)]))
     for x in range(len(all_matched)):
         shutil.rmtree(all_matched[x])
     return len(all_matched)
 
 
 # deletes tags from the cloud, not the actual images
-async def delete_from_cloud(
-    camera: str = None, event: str = None, id: str = None, app_client: str = None
-):
+async def delete_from_cloud(camera: str = None, event: str = None, id: str = None, app_client: str = None):
     pattern = _create_match_pattern(camera, event, id, False)
     filter_args = {}
     if camera:
@@ -168,9 +154,7 @@ async def delete_from_cloud(
         if re.match(pattern, tag):
             matched.append(tag)
 
-    await app_client.data_client.remove_tags_from_binary_data_by_filter(
-        tags=matched, filter=Filter(**filter_args)
-    )
+    await app_client.data_client.remove_tags_from_binary_data_by_filter(tags=matched, filter=Filter(**filter_args))
     return
 
 
@@ -178,9 +162,7 @@ def _name_clean(cam_name):
     return cam_name.replace(" ", "_")
 
 
-def _create_match_pattern(
-    camera: str = None, event: str = None, id: str = None, use_filesystem: bool = False
-):
+def _create_match_pattern(camera: str = None, event: str = None, id: str = None, use_filesystem: bool = False):
     prefix = ""
     if use_filesystem:
         prefix = ROOT_DIR + "/"
